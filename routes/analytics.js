@@ -305,4 +305,51 @@ router.post('/events', (req, res) => {
   }
 });
 
+// 📦 배치 이벤트 추적 (비용 효율적)
+router.post('/events/batch', (req, res) => {
+  try {
+    const { test_id, session_id, events } = req.body;
+
+    // 배치 데이터 유효성 검사
+    if (!test_id || !Array.isArray(events) || events.length === 0) {
+      return res.status(400).json({
+        success: false,
+        error: 'test_id와 events 배열이 필요합니다.'
+      });
+    }
+
+    // 배치 이벤트 로깅
+    console.log('📦 배치 이벤트 추적:', {
+      test_id,
+      session_id,
+      events_count: events.length,
+      events: events.map(e => ({
+        event_type: e.event_type,
+        user_action: e.user_action,
+        question_number: e.question_number,
+        timestamp: e.timestamp
+      })),
+      ip: req.ip,
+      userAgent: req.get('User-Agent')
+    });
+
+    // 성공 응답
+    res.status(201).json({
+      success: true,
+      message: `${events.length}개의 이벤트가 배치로 기록되었습니다.`,
+      batch_id: `batch_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      processed_events: events.length,
+      timestamp: new Date().toISOString()
+    });
+
+  } catch (error) {
+    console.error('❌ 배치 이벤트 추적 오류:', error);
+    res.status(500).json({
+      success: false,
+      error: '배치 이벤트 기록 중 서버 오류가 발생했습니다.',
+      details: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
+  }
+});
+
 export default router;
