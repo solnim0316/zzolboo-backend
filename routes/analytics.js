@@ -253,4 +253,56 @@ router.get('/kpi', (req, res) => {
   });
 });
 
+// 📊 이벤트 추적 (사용자 행동 기록)
+router.post('/events', (req, res) => {
+  try {
+    const { 
+      event_type, 
+      test_id, 
+      user_action, 
+      question_number, 
+      answer_value, 
+      timestamp,
+      metadata 
+    } = req.body;
+
+    // 이벤트 데이터 유효성 검사
+    if (!event_type || !test_id) {
+      return res.status(400).json({
+        success: false,
+        error: 'event_type과 test_id는 필수입니다.'
+      });
+    }
+
+    // 이벤트 로깅 (실제로는 데이터베이스에 저장)
+    console.log('📊 이벤트 추적:', {
+      event_type,
+      test_id,
+      user_action,
+      question_number,
+      answer_value,
+      timestamp: timestamp || new Date().toISOString(),
+      metadata,
+      ip: req.ip,
+      userAgent: req.get('User-Agent')
+    });
+
+    // 성공 응답
+    res.status(201).json({
+      success: true,
+      message: '이벤트가 성공적으로 기록되었습니다.',
+      event_id: `evt_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      timestamp: new Date().toISOString()
+    });
+
+  } catch (error) {
+    console.error('❌ 이벤트 추적 오류:', error);
+    res.status(500).json({
+      success: false,
+      error: '이벤트 기록 중 서버 오류가 발생했습니다.',
+      details: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
+  }
+});
+
 export default router;
